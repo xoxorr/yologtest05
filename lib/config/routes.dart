@@ -3,7 +3,7 @@ import '../screens/home/home_screen.dart';
 import '../screens/post/post_create.dart';
 import '../screens/post/post_detail.dart';
 import '../screens/profile/profile_screen.dart';
-import '../screens/auth/login_screen.dart';
+import '../screens/auth/login_dialog.dart';
 
 class AppRoutes {
   static const String home = '/home';
@@ -17,7 +17,7 @@ class AppRoutes {
       case home:
         return MaterialPageRoute(builder: (_) => HomeScreen());
       case login:
-        return MaterialPageRoute(builder: (_) => LoginScreen());
+        return MaterialPageRoute(builder: (_) => LoginDialog());
       case postDetail:
         return MaterialPageRoute(
           builder: (_) => PostDetailScreen(postId: settings.arguments as String),
