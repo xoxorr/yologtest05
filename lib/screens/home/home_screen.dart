@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../auth/login_screen.dart';
 import '../write/write_screen.dart';
 import '../profile/profile_screen.dart';
-import '../post/post_detail_screen.dart'; // 디테일 스크린 import
+import '../details/detail_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -125,9 +125,9 @@ class HomeScreen extends StatelessWidget {
                     return Center(child: Text("게시글이 없습니다."));
                   }
                   return GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.7,
+                    gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 300, // 카드의 최대 너비를 300px로 설정
+                      childAspectRatio: 0.7, // 카드의 높이 비율
                       mainAxisSpacing: 8,
                       crossAxisSpacing: 8,
                     ),
@@ -139,11 +139,10 @@ class HomeScreen extends StatelessWidget {
 
                       return GestureDetector(
                         onTap: () {
-                          // 디테일 스크린으로 이동
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => PostDetailScreen(post: post),
+                              builder: (context) => DetailScreen(post: post),
                             ),
                           );
                         },
