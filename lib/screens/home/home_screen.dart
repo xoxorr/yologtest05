@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../auth/login_screen.dart';
+import '../write/write_screen.dart';
+import '../profile/profile_screen.dart';
+import '../post/post_detail_screen.dart'; // 디테일 스크린 import
 
 class HomeScreen extends StatelessWidget {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -13,21 +17,41 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  void _navigateToWriteScreen(BuildContext context) {
+    if (_auth.currentUser == null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => LoginScreen()),
+      );
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => WriteScreen()),
+      );
+    }
+  }
+
+  void _navigateToProfileScreen(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ProfileScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: null, // 뒤로 가기 화살표 제거
-        automaticallyImplyLeading: false, // 자동으로 leading 아이콘 추가 방지
         title: GestureDetector(
           onTap: () {
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(builder: (context) => HomeScreen()),
                   (route) => false,
-            ); // 'Yolog' 클릭 시 홈 화면으로 이동
+            );
           },
           child: Text(
             'Yolog',
@@ -45,7 +69,7 @@ class HomeScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => LoginScreen()),
-              ); // 로그인 버튼 클릭 시 LoginScreen으로 이동
+              );
             },
             child: Text(
               '로그인',
@@ -58,7 +82,7 @@ class HomeScreen extends StatelessWidget {
               if (result == 'logout') {
                 _signOut(context);
               } else if (result == 'profile') {
-                // 프로필 화면 이동 기능 추가
+                _navigateToProfileScreen(context);
               }
             },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -74,66 +98,13 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 검색창 섹션
             Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Center(
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.9, // 화면 폭에 맞추기
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: '검색어 입력',
-                      prefixIcon: Icon(Icons.search, color: Color(0xFF003366)),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Color(0xFF003366)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Color(0xFF003366)),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // 중앙 배너 섹션
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Container(
-                height: 200,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  image: DecorationImage(
-                    image: NetworkImage('https://via.placeholder.com/400'),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                child: Align(
-                  alignment: Alignment.bottomLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      '중앙 배너 제목',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // 추천 목록 섹션
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
               child: Text(
                 '추천 목록',
                 style: TextStyle(
@@ -143,77 +114,120 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
             ),
-            SizedBox(height: 8),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              itemCount: 5, // 예시 데이터 개수
-              itemBuilder: (context, index) {
-                return ListTile(
-                  leading: Text(
-                    '${index + 1}',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF003366),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance.collection('posts').orderBy('createdAt', descending: true).snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return Center(child: Text("게시글이 없습니다."));
+                  }
+                  return GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.7,
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
                     ),
-                  ),
-                  title: Text('추천 포스트 제목 ${index + 1}'),
-                  subtitle: Text('간단한 설명이나 부제목'),
-                  onTap: () {
-                    // 포스트 상세 화면으로 이동
-                  },
-                );
-              },
-            ),
+                    itemCount: snapshot.data!.docs.length,
+                    itemBuilder: (context, index) {
+                      var post = snapshot.data!.docs[index];
+                      var postData = post.data() as Map<String, dynamic>;
+                      var imageUrl = postData.containsKey('imageUrl') ? postData['imageUrl'] : 'https://via.placeholder.com/150';
 
-            // 스토리 크리에이터 섹션
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-              child: Text(
-                '스토리 크리에이터',
-                style: TextStyle(
-                  color: Color(0xFF003366),
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              itemCount: 3, // 예시 데이터 개수
-              itemBuilder: (context, index) {
-                return Card(
-                  margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundImage: NetworkImage('https://via.placeholder.com/100'),
-                    ),
-                    title: Text('크리에이터 ${index + 1}'),
-                    subtitle: Text('구독자 100명 | 최근 게시물 제목'),
-                    trailing: ElevatedButton(
-                      onPressed: () {
-                        // 구독 기능 추가
-                      },
-                      child: Text('구독'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF003366),
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                    onTap: () {
-                      // 크리에이터 페이지로 이동
+                      return GestureDetector(
+                        onTap: () {
+                          // 디테일 스크린으로 이동
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PostDetailScreen(post: post),
+                            ),
+                          );
+                        },
+                        child: Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 2,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      image: DecorationImage(
+                                        image: NetworkImage(imageUrl),
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  postData['title'] ?? '제목 없음',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF003366),
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'by ${postData['author'] ?? 'Unknown'}',
+                                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                                ),
+                                Text(
+                                  postData['createdAt'] != null
+                                      ? postData['createdAt'].toDate().toLocal().toString().split(' ')[0]
+                                      : '날짜 없음',
+                                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                                ),
+                                SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(Icons.thumb_up, size: 14, color: Colors.grey),
+                                        SizedBox(width: 4),
+                                        Text('${postData['likes'] ?? 0}'),
+                                      ],
+                                    ),
+                                    Row(
+                                      children: [
+                                        Icon(Icons.comment, size: 14, color: Colors.grey),
+                                        SizedBox(width: 4),
+                                        Text('${postData['comments'] ?? 0}'),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
                     },
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _navigateToWriteScreen(context),
+        backgroundColor: Color(0xFF003366),
+        child: Icon(Icons.edit, color: Colors.white),
       ),
     );
   }

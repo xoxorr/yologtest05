@@ -37,7 +37,6 @@ class _LoginScreenState extends State<LoginScreen> {
         title: Text('로그인', style: TextStyle(color: Color(0xFF003366))),
         backgroundColor: Colors.white,
         iconTheme: IconThemeData(color: Color(0xFF003366)),
-        elevation: 0,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -48,17 +47,9 @@ class _LoginScreenState extends State<LoginScreen> {
               controller: _emailController,
               decoration: InputDecoration(
                 labelText: '이메일',
-                labelStyle: TextStyle(color: Color(0xFF003366)),
-                prefixIcon: Icon(Icons.email, color: Color(0xFF003366)),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF003366)),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF003366)),
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                prefixIcon: Icon(Icons.email),
               ),
+              textInputAction: TextInputAction.next, // 다음 입력란으로 이동
             ),
             SizedBox(height: 16),
             TextField(
@@ -66,17 +57,10 @@ class _LoginScreenState extends State<LoginScreen> {
               obscureText: true,
               decoration: InputDecoration(
                 labelText: '비밀번호',
-                labelStyle: TextStyle(color: Color(0xFF003366)),
-                prefixIcon: Icon(Icons.lock, color: Color(0xFF003366)),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF003366)),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF003366)),
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                prefixIcon: Icon(Icons.lock),
               ),
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _signIn(), // 엔터 키 누를 때 로그인 함수 호출
             ),
             SizedBox(height: 16),
             Text(
@@ -88,12 +72,8 @@ class _LoginScreenState extends State<LoginScreen> {
               onPressed: _signIn,
               child: Text('로그인'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF003366), // primary 대신 backgroundColor 사용
-                foregroundColor: Colors.white, // onPrimary 대신 foregroundColor 사용
-                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
+                backgroundColor: Color(0xFF003366),
+                foregroundColor: Colors.white,
               ),
             ),
           ],

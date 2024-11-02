@@ -26,7 +26,7 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => PostCreateScreen());
       case profile:
         return MaterialPageRoute(
-          builder: (_) => ProfileScreen(userId: settings.arguments as String),
+          builder: (_) => ProfileScreen(),
         );
       default:
         return MaterialPageRoute(
