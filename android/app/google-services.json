@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "835401542975",
+    "project_id": "yolog-test05",
+    "storage_bucket": "yolog-test05.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:835401542975:android:8d7d04a41a76d42779778a",
+        "android_client_info": {
+          "package_name": "com.yologtest05.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDAIh1q121e_NsUISEj_GcHeN5L8FWx9kQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
