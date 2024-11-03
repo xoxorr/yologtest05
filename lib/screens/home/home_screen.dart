@@ -5,7 +5,7 @@ import '../auth/login_dialog.dart'; // 로그인 팝업 임포트
 import '../post/post_create.dart'; // 글쓰기 화면 연결
 import '../profile/profile_screen.dart';
 import '../search/search_screen.dart';
-import '../details/detail_screen.dart';
+import '../post/post_detail.dart'; // PostDetailScreen을 참조
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -205,7 +205,7 @@ class PostsList extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => DetailScreen(post: post),
+                    builder: (context) => PostDetailScreen(postId: post.id), // 수정된 부분: PostDetailScreen으로 연결
                   ),
                 );
               },

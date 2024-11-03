@@ -8,6 +8,7 @@ import 'config/theme.dart';
 import 'screens/home/home_screen.dart'; // HomeScreen 파일을 import
 import 'screens/post/post_create.dart';
 import 'services/post_service.dart';
+import 'screens/post/post_detail.dart';
 
 
 void main() async{
