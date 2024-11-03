@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'sign_up_dialog.dart';
 
 class LoginDialog extends StatefulWidget {
   @override
@@ -30,9 +31,8 @@ class _LoginDialogState extends State<LoginDialog> {
 
   Future<void> _signInWithGoogle() async {
     try {
-      // 구글 계정으로 로그인
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return; // 사용자가 로그인 취소 시 반환
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) return; // 사용자가 로그인 취소 시
 
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
@@ -40,18 +40,11 @@ class _LoginDialogState extends State<LoginDialog> {
         idToken: googleAuth.idToken,
       );
 
-      // Firebase에 인증 정보로 로그인 시도
       await _auth.signInWithCredential(credential);
-
-      // 로그인 후 팝업 닫기
       Navigator.of(context).pop();
     } on FirebaseAuthException catch (e) {
       setState(() {
         _errorMessage = '구글 로그인에 실패했습니다.';
-      });
-    } catch (e) {
-      setState(() {
-        _errorMessage = '로그인 도중 오류가 발생했습니다.';
       });
     }
   }
@@ -65,10 +58,9 @@ class _LoginDialogState extends State<LoginDialog> {
         height: MediaQuery.of(context).size.height * 0.5,
         child: Row(
           children: [
-            // 왼쪽 환영 이미지 및 메시지
             Expanded(
               child: Container(
-                color: Color(0xFF003366), // Yolog 로고 색상으로 설정
+                color: Color(0xFF003366),
                 child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -88,7 +80,6 @@ class _LoginDialogState extends State<LoginDialog> {
                 ),
               ),
             ),
-            // 오른쪽 로그인 폼
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -107,9 +98,13 @@ class _LoginDialogState extends State<LoginDialog> {
                       controller: _passwordController,
                       obscureText: true,
                       decoration: InputDecoration(labelText: '비밀번호'),
+                      onSubmitted: (_) => _signInWithEmailPassword(), // 엔터로 로그인
                     ),
                     SizedBox(height: 8),
-                    Text(_errorMessage, style: TextStyle(color: Colors.red)),
+                    Text(
+                      _errorMessage,
+                      style: TextStyle(color: Colors.red),
+                    ),
                     SizedBox(height: 8),
                     ElevatedButton(
                       onPressed: _signInWithEmailPassword,
@@ -121,15 +116,13 @@ class _LoginDialogState extends State<LoginDialog> {
                     ),
                     SizedBox(height: 16),
                     Text('소셜 계정으로 로그인', style: TextStyle(fontSize: 14)),
-                    SizedBox(height: 8),
-                    // 구글 로그인 버튼 (아이콘 스타일)
                     IconButton(
                       icon: Text(
-                        'G', // 'G' 텍스트를 아이콘처럼 사용
+                        'G',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF003366), // Yolog 로고 색상과 동일하게 설정
+                          color: Color(0xFF003366),
                         ),
                       ),
                       onPressed: _signInWithGoogle,
@@ -138,7 +131,8 @@ class _LoginDialogState extends State<LoginDialog> {
                     SizedBox(height: 8),
                     TextButton(
                       onPressed: () {
-                        // 회원가입 페이지로 이동 기능 추가 가능
+                        Navigator.of(context).pop();
+                        showDialog(context: context, builder: (context) => SignUpDialog());
                       },
                       child: Text('아직 회원이 아니신가요? 회원가입', style: TextStyle(color: Color(0xFF003366))),
                     ),
@@ -147,8 +141,8 @@ class _LoginDialogState extends State<LoginDialog> {
               ),
             ),
           ],
-),
-),
-);
-}
+        ),
+      ),
+    );
+  }
 }

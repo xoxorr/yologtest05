@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -9,76 +9,110 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _bioController = TextEditingController();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  User? _user;
+  Map<String, dynamic>? _userData;
 
   @override
   void initState() {
     super.initState();
-    _loadUserProfile();
+    _getUserData();
   }
 
-  Future<void> _loadUserProfile() async {
-    final user = _auth.currentUser;
-    if (user != null) {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      if (doc.exists) {
-        _nameController.text = doc['displayName'] ?? '';
-        _bioController.text = doc['bio'] ?? '';
-      }
-    }
-  }
-
-  Future<void> _updateUserProfile() async {
-    final user = _auth.currentUser;
-    if (user != null) {
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        'displayName': _nameController.text,
-        'bio': _bioController.text,
-        'email': user.email,
-        'photoUrl': user.photoURL,
-      }, SetOptions(merge: true));
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('프로필이 업데이트되었습니다.')),
-      );
+  void _getUserData() async {
+    _user = _auth.currentUser;
+    if (_user != null) {
+      DocumentSnapshot userDoc =
+      await _firestore.collection('users').doc(_user!.uid).get();
+      setState(() {
+        _userData = userDoc.data() as Map<String, dynamic>?;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('프로필', style: TextStyle(color: Color(0xFF003366))),
-        backgroundColor: Colors.white,
-        iconTheme: IconThemeData(color: Color(0xFF003366)),
-      ),
+      backgroundColor: Colors.white,
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            TextField(
-              controller: _nameController,
-              decoration: InputDecoration(labelText: '이름'),
+            SizedBox(height: 40),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(Icons.notifications_none, color: Colors.grey),
+                IconButton(
+                  icon: Icon(Icons.close, color: Colors.grey),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
             ),
-            SizedBox(height: 16),
-            TextField(
-              controller: _bioController,
-              decoration: InputDecoration(labelText: '소개'),
-              maxLines: 3,
+            SizedBox(height: 20),
+            CircleAvatar(
+              radius: 40,
+              backgroundImage: _userData != null
+                  ? NetworkImage(_userData!['profileImageUrl'] ?? 'https://via.placeholder.com/150')
+                  : AssetImage('assets/default_profile.png') as ImageProvider,
             ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _updateUserProfile,
-              child: Text('프로필 저장'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF003366),
-                foregroundColor: Colors.white,
-              ),
+            SizedBox(height: 10),
+            Text(
+              _userData != null ? _userData!['name'] ?? 'User' : 'User',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
+            Text(
+              _userData != null ? 'Lv. ${_userData!['level'] ?? 1}' : 'Lv. 1',
+              style: TextStyle(color: Colors.orange, fontSize: 14),
+            ),
+            SizedBox(height: 30),
+            _buildMenuItem(Icons.article_outlined, '내 글 보기', () {
+              // 내 글 보기 기능 구현
+            }),
+            _buildMenuItem(Icons.edit_outlined, '새 글 작성', () {
+              // 새 글 작성 기능 구현
+            }),
+            _buildMenuItem(Icons.message_outlined, '메시지', () {
+              // 메시지 기능 구현
+            }, badgeCount: 12), // 예시: 새 메시지가 12개 있다고 표시
+            _buildMenuItem(Icons.person_outline, '프로필 관리', () {
+              // 프로필 관리 기능 구현
+            }),
+            Spacer(),
+            Divider(),
+            _buildMenuItem(Icons.logout, '로그아웃', () async {
+              await _auth.signOut();
+              Navigator.of(context).pushReplacementNamed('/login'); // 로그인 화면으로 이동
+            }),
+            _buildMenuItem(Icons.settings, '설정', () {
+              // 설정 기능 구현
+            }),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildMenuItem(IconData icon, String title, VoidCallback onTap, {int? badgeCount}) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.grey),
+      title: Text(title),
+      trailing: badgeCount != null
+          ? Container(
+        padding: EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: Colors.orange,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          badgeCount.toString(),
+          style: TextStyle(color: Colors.white, fontSize: 12),
+        ),
+      )
+          : null,
+      onTap: onTap,
     );
   }
 }

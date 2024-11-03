@@ -6,6 +6,9 @@ import 'firebase_options.dart';
 import 'config/routes.dart';
 import 'config/theme.dart';
 import 'screens/home/home_screen.dart'; // HomeScreen 파일을 import
+import 'screens/post/post_create.dart';
+import 'services/post_service.dart';
+
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();

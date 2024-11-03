@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../details/detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   @override
@@ -9,75 +7,89 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
+  List<String> _searchResults = []; // 예시용 검색 결과 데이터
+
+  void _performSearch(String query) {
+    // 검색 로직을 추가하세요.
+    setState(() {
+      _searchResults = [
+        '검색 결과 1',
+        '검색 결과 2',
+        '검색 결과 3',
+      ];
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white, // 배경색을 흰색으로 설정
       appBar: AppBar(
+        title: Text(
+          '검색',
+          style: TextStyle(color: Color(0xFF003366)),
+        ),
         backgroundColor: Colors.white,
         iconTheme: IconThemeData(color: Color(0xFF003366)),
-        title: TextField(
-          controller: _searchController,
-          decoration: InputDecoration(
-            hintText: '검색어 입력',
-            border: InputBorder.none,
-          ),
-          autofocus: true,
-          onChanged: (value) {
-            setState(() {
-              _searchQuery = value;
-            });
-          },
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.close, color: Color(0xFF003366)),
-            onPressed: () {
-              _searchController.clear();
-              setState(() {
-                _searchQuery = '';
-              });
-            },
-          ),
-        ],
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: (_searchQuery.isEmpty)
-            ? FirebaseFirestore.instance.collection('posts').snapshots()
-            : FirebaseFirestore.instance
-            .collection('posts')
-            .where('title', isGreaterThanOrEqualTo: _searchQuery)
-            .where('title', isLessThanOrEqualTo: _searchQuery + '\uf8ff')
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(child: Text("검색 결과가 없습니다."));
-          }
-          return ListView.builder(
-            itemCount: snapshot.data!.docs.length,
-            itemBuilder: (context, index) {
-              var post = snapshot.data!.docs[index];
-              var postData = post.data() as Map<String, dynamic>;
-
-              return ListTile(
-                title: Text(postData['title'] ?? '제목 없음'),
-                subtitle: Text(postData['content'] ?? '내용 없음'),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DetailScreen(post: post),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // 검색 입력창
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: TextField(
+                controller: _searchController,
+                onSubmitted: _performSearch,
+                decoration: InputDecoration(
+                  hintText: '검색어를 입력하세요',
+                  prefixIcon: Icon(Icons.search, color: Color(0xFF003366)),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+            ),
+            SizedBox(height: 16),
+            // 검색 결과 리스트
+            Expanded(
+              child: _searchResults.isEmpty
+                  ? Center(
+                child: Text(
+                  '검색 결과가 없습니다.',
+                  style: TextStyle(color: Colors.grey, fontSize: 16),
+                ),
+              )
+                  : ListView.builder(
+                itemCount: _searchResults.length,
+                itemBuilder: (context, index) {
+                  return Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    margin: EdgeInsets.symmetric(vertical: 8),
+                    child: ListTile(
+                      title: Text(
+                        _searchResults[index],
+                        style: TextStyle(
+                          color: Color(0xFF003366),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      trailing: Icon(Icons.arrow_forward, color: Color(0xFF003366)),
+                      onTap: () {
+                        // 검색 결과 클릭 시 동작 추가
+                      },
                     ),
                   );
                 },
-              );
-            },
-          );
-        },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

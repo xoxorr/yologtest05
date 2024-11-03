@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../services/post_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PostCreateScreen extends StatefulWidget {
   @override
@@ -8,60 +8,101 @@ class PostCreateScreen extends StatefulWidget {
 }
 
 class _PostCreateScreenState extends State<PostCreateScreen> {
-  final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
+  final _tagController = TextEditingController();
   final _contentController = TextEditingController();
-  final PostService _postService = PostService();
-
-  Future<void> _createPost() async {
-    if (_formKey.currentState!.validate()) {
-      final userId = FirebaseAuth.instance.currentUser?.uid;
-      if (userId != null) {
-        await _postService.createPost(
-          userId,
-          _titleController.text,
-          _contentController.text,
-        );
-        Navigator.pop(context);
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Create Post'),
-      ),
+      backgroundColor: Colors.white, // 전체 배경색 흰색
       body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _titleController,
-                decoration: InputDecoration(labelText: 'Title'),
-                validator: (value) {
-                  return value!.isEmpty ? 'Please enter a title' : null;
-                },
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 40), // 상단 여백 추가
+            TextField(
+              controller: _titleController,
+              decoration: InputDecoration(
+                hintText: '제목을 입력하세요',
+                hintStyle: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[600],
+                ),
+                border: InputBorder.none,
               ),
-              TextFormField(
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 20), // 간격 조정
+            TextField(
+              controller: _tagController,
+              decoration: InputDecoration(
+                hintText: '태그를 입력하세요',
+                hintStyle: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                border: InputBorder.none,
+              ),
+            ),
+            SizedBox(height: 10), // 간격 조정
+
+            Expanded(
+              child: TextField(
                 controller: _contentController,
-                decoration: InputDecoration(labelText: 'Content'),
-                validator: (value) {
-                  return value!.isEmpty ? 'Please enter content' : null;
-                },
+                decoration: InputDecoration(
+                  hintText: '당신의 이야기를 들려주세요!',
+                  border: InputBorder.none,
+                ),
+                maxLines: null,
+                expands: true,
+                keyboardType: TextInputType.multiline,
               ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _createPost,
-                child: Text('Post'),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        color: Colors.white, // 하단 바 색상을 흰색으로 설정
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('나가기', style: TextStyle(color: Colors.black)), // "나가기" 글씨 색상을 검정색으로 변경
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                await _savePost();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF003366), // Yolog 색상
+                foregroundColor: Colors.black, // "출간하기" 글씨 색상을 검정색으로 설정
               ),
-            ],
-          ),
+              child: Text('출간하기'),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  Future<void> _savePost() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'unknown';
+    final title = _titleController.text;
+    final tag = _tagController.text;
+    final content = _contentController.text;
+
+    await FirebaseFirestore.instance.collection('posts').add({
+      'userId': userId,
+      'title': title,
+      'tag': tag,
+      'content': content,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    Navigator.of(context).pop();
   }
 }

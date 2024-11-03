@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../auth/login_dialog.dart'; // 로그인 팝업 임포트
-import '../write/write_screen.dart';
+import '../post/post_create.dart'; // 글쓰기 화면 연결
 import '../profile/profile_screen.dart';
 import '../search/search_screen.dart';
 import '../details/detail_screen.dart';
@@ -48,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     } else {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => WriteScreen()),
+        MaterialPageRoute(builder: (context) => PostCreateScreen()), // PostCreateScreen으로 연결
       );
     }
   }
