@@ -1,118 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
-class ProfileScreen extends StatefulWidget {
-  @override
-  _ProfileScreenState createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends State<ProfileScreen> {
+class ProfileScreen extends StatelessWidget {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  User? _user;
-  Map<String, dynamic>? _userData;
-
-  @override
-  void initState() {
-    super.initState();
-    _getUserData();
-  }
-
-  void _getUserData() async {
-    _user = _auth.currentUser;
-    if (_user != null) {
-      DocumentSnapshot userDoc =
-      await _firestore.collection('users').doc(_user!.uid).get();
-      setState(() {
-        _userData = userDoc.data() as Map<String, dynamic>?;
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
+    final User? user = _auth.currentUser;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: Text('프로필'),
+      ),
       body: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 40),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Icon(Icons.notifications_none, color: Colors.grey),
-                IconButton(
-                  icon: Icon(Icons.close, color: Colors.grey),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            ),
-            SizedBox(height: 20),
             CircleAvatar(
-              radius: 40,
-              backgroundImage: _userData != null
-                  ? NetworkImage(_userData!['profileImageUrl'] ?? 'https://via.placeholder.com/150')
+              radius: 50,
+              backgroundImage: user?.photoURL != null
+                  ? NetworkImage(user!.photoURL!)
                   : AssetImage('assets/default_profile.png') as ImageProvider,
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 16),
             Text(
-              _userData != null ? _userData!['name'] ?? 'User' : 'User',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              user?.displayName ?? '사용자 이름 없음',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
+            SizedBox(height: 8),
             Text(
-              _userData != null ? 'Lv. ${_userData!['level'] ?? 1}' : 'Lv. 1',
-              style: TextStyle(color: Colors.orange, fontSize: 14),
+              user?.email ?? '이메일 없음',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
-            SizedBox(height: 30),
-            _buildMenuItem(Icons.article_outlined, '내 글 보기', () {
-              // 내 글 보기 기능 구현
-            }),
-            _buildMenuItem(Icons.edit_outlined, '새 글 작성', () {
-              // 새 글 작성 기능 구현
-            }),
-            _buildMenuItem(Icons.message_outlined, '메시지', () {
-              // 메시지 기능 구현
-            }, badgeCount: 12), // 예시: 새 메시지가 12개 있다고 표시
-            _buildMenuItem(Icons.person_outline, '프로필 관리', () {
-              // 프로필 관리 기능 구현
-            }),
-            Spacer(),
-            Divider(),
-            _buildMenuItem(Icons.logout, '로그아웃', () async {
-              await _auth.signOut();
-              Navigator.of(context).pushReplacementNamed('/login'); // 로그인 화면으로 이동
-            }),
-            _buildMenuItem(Icons.settings, '설정', () {
-              // 설정 기능 구현
-            }),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/edit-profile');
+              },
+              child: Text('프로필 수정'),
+            ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildMenuItem(IconData icon, String title, VoidCallback onTap, {int? badgeCount}) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.grey),
-      title: Text(title),
-      trailing: badgeCount != null
-          ? Container(
-        padding: EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: Colors.orange,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Text(
-          badgeCount.toString(),
-          style: TextStyle(color: Colors.white, fontSize: 12),
-        ),
-      )
-          : null,
-      onTap: onTap,
     );
   }
 }

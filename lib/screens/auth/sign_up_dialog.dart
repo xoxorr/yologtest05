@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'login_dialog.dart';
+import 'auth_service.dart'; // AuthService의 경로 확인 및 수정
 
 class SignUpDialog extends StatefulWidget {
   @override
@@ -9,80 +8,91 @@ class SignUpDialog extends StatefulWidget {
 }
 
 class _SignUpDialogState extends State<SignUpDialog> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final AuthService _authService = AuthService();
   final TextEditingController _emailController = TextEditingController();
-  String _errorMessage = '';
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  bool isLoading = false;
 
-  Future<void> _signInWithGoogle() async {
+  void _register() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('비밀번호가 일치하지 않습니다.')),
+      );
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    }
+
     try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) return;
-
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
+      User? user = await _authService.registerWithEmailAndPassword(
+        _emailController.text,
+        _passwordController.text,
       );
 
-      await _auth.signInWithCredential(credential);
-      Navigator.of(context).pop();
-    } on FirebaseAuthException catch (e) {
+      if (user != null) {
+        // 회원가입 성공 후 추가 작업
+        Navigator.of(context).pop();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('회원가입에 실패했습니다.')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('에러가 발생했습니다: $e')),
+      );
+    } finally {
       setState(() {
-        _errorMessage = '구글 회원가입에 실패했습니다.';
+        isLoading = false;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.7,
-        height: MediaQuery.of(context).size.height * 0.5,
-        child: Row(
+    return AlertDialog(
+      title: Text('회원가입'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: Container(
-                color: Color(0xFF003366),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.emoji_people, size: 80, color: Colors.white),
-                      Text('환영합니다!', style: TextStyle(color: Colors.white, fontSize: 24)),
-                    ],
-                  ),
-                ),
-              ),
+            TextField(
+              controller: _emailController,
+              decoration: InputDecoration(labelText: '이메일'),
             ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('회원가입', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                    TextField(controller: _emailController, decoration: InputDecoration(labelText: '이메일을 입력하세요.')),
-                    Text(_errorMessage, style: TextStyle(color: Colors.red)),
-                    ElevatedButton(onPressed: () {}, child: Text('회원가입')),
-                    Text('소셜 계정으로 회원가입'),
-                    IconButton(icon: Text('G', style: TextStyle(fontSize: 24, color: Color(0xFF003366))), onPressed: _signInWithGoogle),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        showDialog(context: context, builder: (context) => LoginDialog());
-                      },
-                      child: Text('계정이 이미 있으신가요? 로그인', style: TextStyle(color: Color(0xFF003366))),
-                    ),
-                  ],
-                ),
-              ),
+            TextField(
+              controller: _passwordController,
+              decoration: InputDecoration(labelText: '비밀번호'),
+              obscureText: true,
             ),
+            TextField(
+              controller: _confirmPasswordController,
+              decoration: InputDecoration(labelText: '비밀번호 확인'),
+              obscureText: true,
+            ),
+            // 기존의 추가적인 UI 및 기능을 유지
           ],
         ),
       ),
+      actions: [
+        isLoading
+            ? CircularProgressIndicator()
+            : TextButton(
+          onPressed: _register,
+          child: Text('회원가입'),
+        ),
+        // 기존의 버튼 또는 추가 작업들 유지
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text('취소'),
+        ),
+      ],
     );
   }
 }

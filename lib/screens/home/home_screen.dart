@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../auth/login_dialog.dart'; // 로그인 팝업 임포트
-import '../post/post_create.dart'; // 글쓰기 화면 연결
+import '../auth/login_dialog.dart';
+import '../post/post_create.dart';
 import '../profile/profile_screen.dart';
 import '../search/search_screen.dart';
-import '../post/post_detail.dart'; // PostDetailScreen을 참조
+import 'package:yologtest05/services/firestore_service.dart';
+import 'package:yologtest05/services/notification_service.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -48,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     } else {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => PostCreateScreen()), // PostCreateScreen으로 연결
+        MaterialPageRoute(builder: (context) => PostCreateScreen()),
       );
     }
   }
@@ -106,7 +107,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             child: Text('로그인', style: TextStyle(color: Color(0xFF003366))),
           )
               : PopupMenuButton<String>(
-            icon: Icon(Icons.menu, color: Color(0xFF003366)),
+            icon: CircleAvatar(
+              backgroundImage: _auth.currentUser!.photoURL != null
+                  ? NetworkImage(_auth.currentUser!.photoURL!)
+                  : AssetImage('assets/default_profile.png') as ImageProvider,
+            ),
             onSelected: (String result) {
               if (result == 'logout') {
                 _signOut(context);
@@ -117,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
               PopupMenuItem<String>(
                 value: 'profile',
-                child: Text('프로필'),
+                child: Text('프로필 보기'),
               ),
               PopupMenuItem<String>(
                 value: 'logout',
@@ -202,12 +207,8 @@ class PostsList extends StatelessWidget {
 
             return GestureDetector(
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => PostDetailScreen(postId: post.id), // 수정된 부분: PostDetailScreen으로 연결
-                  ),
-                );
+                // 현재 DetailScreen 참조가 없으므로, 게시글 탭 기능은 여전히 비활성화
+                // 이곳에서 추가할 디테일 페이지가 준비되면 로직을 업데이트하세요.
               },
               child: Card(
                 shape: RoundedRectangleBorder(

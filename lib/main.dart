@@ -3,12 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
-import 'config/routes.dart';
-import 'config/theme.dart';
+import 'services/notification_service.dart';
+
 import 'screens/home/home_screen.dart'; // HomeScreen 파일을 import
-import 'screens/post/post_create.dart';
-import 'services/post_service.dart';
-import 'screens/post/post_detail.dart';
 
 
 void main() async{
@@ -16,6 +13,9 @@ void main() async{
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  NotificationService notificationService = NotificationService();
+  await notificationService.initialize();
+
   runApp(YologApp());
 }
 
@@ -25,10 +25,12 @@ class YologApp extends StatelessWidget {
     return MaterialApp(
       title: 'Yolog',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primaryColor: Color(0xFF003366),
+        visualDensity: VisualDensity.adaptivePlatformDensity,
         fontFamily: 'Poppins', // 전역 폰트 설정
       ),
       home: HomeScreen(), // HomeScreen을 초기 화면으로 설정
+      debugShowCheckedModeBanner: false,
     );
   }
 }

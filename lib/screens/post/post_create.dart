@@ -9,100 +9,60 @@ class PostCreateScreen extends StatefulWidget {
 
 class _PostCreateScreenState extends State<PostCreateScreen> {
   final _titleController = TextEditingController();
-  final _tagController = TextEditingController();
   final _contentController = TextEditingController();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  void _submitPost() async {
+    if (_titleController.text.isEmpty || _contentController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('제목과 내용을 모두 입력해주세요.')),
+      );
+      return;
+    }
+
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    await FirebaseFirestore.instance.collection('posts').add({
+      'title': _titleController.text,
+      'content': _contentController.text,
+      'author': user.displayName ?? 'Anonymous',
+      'createdAt': Timestamp.now(),
+    });
+
+    Navigator.of(context).pop();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // 전체 배경색 흰색
+      appBar: AppBar(
+        title: Text('게시글 작성'),
+        backgroundColor: Color(0xFF003366),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 40), // 상단 여백 추가
             TextField(
               controller: _titleController,
-              decoration: InputDecoration(
-                hintText: '제목을 입력하세요',
-                hintStyle: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[600],
-                ),
-                border: InputBorder.none,
-              ),
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              decoration: InputDecoration(labelText: '제목'),
             ),
-            SizedBox(height: 20), // 간격 조정
+            SizedBox(height: 16),
             TextField(
-              controller: _tagController,
-              decoration: InputDecoration(
-                hintText: '태그를 입력하세요',
-                hintStyle: TextStyle(fontSize: 18, color: Colors.grey[600]),
-                border: InputBorder.none,
-              ),
+              controller: _contentController,
+              decoration: InputDecoration(labelText: '내용'),
+              maxLines: 5,
             ),
-            SizedBox(height: 10), // 간격 조정
-
-            Expanded(
-              child: TextField(
-                controller: _contentController,
-                decoration: InputDecoration(
-                  hintText: '당신의 이야기를 들려주세요!',
-                  border: InputBorder.none,
-                ),
-                maxLines: null,
-                expands: true,
-                keyboardType: TextInputType.multiline,
-              ),
-            ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Container(
-        color: Colors.white, // 하단 바 색상을 흰색으로 설정
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('나가기', style: TextStyle(color: Colors.black)), // "나가기" 글씨 색상을 검정색으로 변경
-            ),
+            SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () async {
-                await _savePost();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF003366), // Yolog 색상
-                foregroundColor: Colors.black, // "출간하기" 글씨 색상을 검정색으로 설정
-              ),
+              onPressed: _submitPost,
               child: Text('출간하기'),
+              style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF003366)),
             ),
           ],
         ),
       ),
     );
-  }
-
-  Future<void> _savePost() async {
-    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'unknown';
-    final title = _titleController.text;
-    final tag = _tagController.text;
-    final content = _contentController.text;
-
-    await FirebaseFirestore.instance.collection('posts').add({
-      'userId': userId,
-      'title': title,
-      'tag': tag,
-      'content': content,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-
-    Navigator.of(context).pop();
   }
 }
